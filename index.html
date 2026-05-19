@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="Deformable Neural Radiance Fields creates free-viewpoint portraits (nerfies) from casually captured videos.">
+  <meta name="keywords" content="Nerfies, D-NeRF, NeRF">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TrajeQ: Trajectory-Preserving Flow Matching Quantization for Efficient Video Generation</title>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'G-PYVRSFMDRL');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./static/images/TrajeQ.png">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+<body>
+
+<nav class="navbar" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+  <div class="navbar-menu">
+  </div>
+</nav>
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">TrajeQ: Trajectory-Preserving Flow Matching Quantization for Low-bit Video Generation</h1>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="">Anonymus Authors</a><sup>1</sup></span>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><sup>1</sup>Anonymus</span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- PDF Link. -->
+              <!-- <span class="link-block">
+                <a href="https://arxiv.org/pdf/"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/2011.12948"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span> -->
+              <!-- Video Link.
+              <span class="link-block">
+                <a href="https://www.youtube.com/watch?v=MrKrnHhk8IA"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-youtube"></i>
+                  </span>
+                  <span>Video</span>
+                </a>
+              </span> -->
+              <!-- Code Link. -->
+              <span class="link-block">
+                <a href="https://github.com/anonymous-orange/TrajeQ"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+              <!-- Dataset Link.
+              <span class="link-block">
+                <a href="https://github.com/google/nerfies/releases/tag/0.1"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="far fa-images"></i>
+                  </span>
+                  <span>Data</span>
+                  </a>
+            </div> -->
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<section class="section">
+  <div class="container is-max-desktop" style="margin-top:-4rem;">
+    <!-- TL;DR. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">TL;DR</h2>
+        <div class="content has-text-justified">
+          <p style="color: #555; font-size: 1.05rem;">
+            <em><strong>TrajeQ</strong></em> preserves flow-matching video generation under extreme low-bit quantization by reducing velocity-orientation drift via direction-aware bit allocation and sensitivity-guided layer preservation, achieving SOTA VBench performance.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!-- TL;DR. -->
+
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+           While flow matching (FM) has emerged as a prominent paradigm for high-quality video generation, its significant computational overhead presents a major obstacle to practical implementation. Although post-training quantization (PTQ) is an established approach for efficient generation, existing PTQ methods primarily minimize reconstruction error in a magnitude-centric manner. This objective is misaligned with deterministic FM trajectories, where low-bit quantization introduces velocity-field orientation errors that can compound across integration steps and drive the generation trajectory off-manifold. To address this issue, we introduce <em><strong>TrajeQ</strong></em> to preserve the geometric integrity of the velocity field and reduce trajectory drift under low-bit quantization. Our approach introduces <em>Curvature-Adaptive Quantization (CAQ)</em> to detect angular shifts across timesteps and mitigate geometric distortion via adaptive precision. We also integrate <em>Directional Bottleneck Preservation (DBP)</em>, a sensitivity-guided precision assignment scheme that retains only the most vulnerable layers in full precision. Experiments demonstrate that <em><strong>TrajeQ</strong></em> achieves state-of-the-art VBench performance and maintains stable video generation under extreme W4A4 and W3A6 quantization regimes where existing methods collapse. We provide the code in the supplementary material and the video results on the <a href="https://anonymous-orange.github.io/" target="_blank">https://anonymous-orange.github.io</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!-- Abstract. -->
+
+    <!-- Figure 1 -->
+    <div class="columns is-centered" style="margin-top: 1rem; padding-right: 3rem;">
+      <div class="column is-full">
+        <img src="./static/images/Appendix1.jpg" alt="Figure 1: TrajeQ Overview" style="width: 100%; max-width: 1000px; margin: 0 auto; display: block;">
+      </div>
+    </div>
+    <!-- Figure 1 -->
+
+<section class="hero is-small" style="margin-top: 2.5rem; background-color: white;">
+  <div class="hero-body" style="padding: 1.5rem 0;">
+    <div class="container is-max-widescreen" style="padding-left: 0; padding-right: 0;">
+      <h2 class="title is-3 has-text-centered">Generation Quality on VBench</h2>
+
+      <!-- Row 1: FP16 -->
+      <div class="columns" style="margin-left: 0; margin-right: 0;">
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/campsite_fp16.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/horse_fp16.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/ship_fp16.mp4" type="video/mp4">
+          </video>
+        </div>
+      </div>
+      <h3 class="title is-5 has-text-centered" style="margin-top: -1rem; margin-bottom: 2rem;">FP16</h3>
+
+      <!-- Row 2: TrajeQ -->
+      <div class="columns" style="margin-left: 0; margin-right: 0;">
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/campsite_trajeQ.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/horse_trajeQ.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/ship_trajeQ.mp4" type="video/mp4">
+          </video>
+        </div>
+      </div>
+      <h3 class="title is-5 has-text-centered" style="margin-top: -1rem;">TrajeQ W6A6</h3>
+
+    </div>
+  </div>
+</section>
+
+
+<section class="hero is-small" style="background-color: white; margin-top: 3rem;">
+  <div class="hero-body" style="padding: 1.5rem 0;">
+    <div class="container is-max-widescreen" style="padding-left: 0; padding-right: 0;">
+      <h2 class="title is-3 has-text-centered">Extreme Compression Performance (W6A6 vs W3A6)</h2>
+
+      <!-- Row 1 -->
+      <div class="columns" style="margin-left: 0; margin-right: 0;">
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/cliff_fp16.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/cliff_w6a6.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/cliff_w3a6.mp4" type="video/mp4">
+          </video>
+        </div>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="columns" style="margin-top: 0.2rem; margin-left: 0; margin-right: 0;">
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/snowman_fp16.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/snowman_w6a6.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/snowman_w3a6.mp4" type="video/mp4">
+          </video>
+        </div>
+      </div>
+
+      <!-- Row 3 -->
+      <div class="columns" style="margin-top: 0.2rem; margin-left: 0; margin-right: 0;">
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/underwater_fp16.mp4" type="video/mp4">
+          </video>
+          <p class="has-text-centered" style="margin-top: 0.5rem; font-size: 0.9rem;"><strong>FP16</strong></p>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/underwater_w6a6.mp4" type="video/mp4">
+          </video>
+          <p class="has-text-centered" style="margin-top: 0.5rem; font-size: 0.9rem;"><strong>TrajeQ W6A6</strong></p>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/underwater_w3a6.mp4" type="video/mp4">
+          </video>
+          <p class="has-text-centered" style="margin-top: 0.5rem; font-size: 0.9rem;"><strong>TrajeQ W3A6</strong></p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<section class="section" style="padding: 0.9rem 0;">
+  <div class="container is-max-widescreen" style="padding: 0; margin: 0;">
+    <div class="columns is-centered has-text-centered" style="margin: 0;">
+      <div class="column is-full" style="padding: 0;">
+        <h2 class="title is-3" style="margin: 0.5rem 0;">Method</h2>
+        <div class="content has-text-justified" style="padding: 0 0.5rem; margin: 0;">
+          <p style="margin: 0;">
+            TrajeQ is the first quantization framework specifically engineered to preserve the geometric trajectory of Flow Matching models. In contrast to conventional approaches that minimize magnitude error and often lead to significant trajectory drift, TrajeQ prioritizes the integrity of vector field directionality. Our framework integrates two complementary mechanisms: Curvature-Adaptive Quantization (CAQ), which dynamically adapts precision by detecting trajectory curvature in real-time, and Directional Bottleneck Preservation (DBP), which identifies and safeguards structural bottlenecks. This synergistic approach enables TrajeQ to achieve high-fidelity video generation without structural collapse.
+          </p>
+          <div class="column is-full" style="margin-top: 2rem;">
+            <img src="./static/images/Figure1.jpg" alt="Figure 1: TrajeQ Overview" style="width: 100%; max-width: 1000px; margin: 0 auto; display: block;">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" style="padding: 2rem 0;">
+  <div class="container is-max-widescreen" style="padding: 0 1rem; margin: 0;">
+    <!-- CAQ and DBP Side by Side -->
+    <div class="columns" style="margin: 0;">
+      <!-- CAQ -->
+      <div class="column is-half" style="padding: 0 1rem 0 0;">
+        <h3 class="title is-4" style="margin-bottom: 1rem;">Curvature-Adaptive Quantization (CAQ)</h3>
+        <div class="content" style="padding: 0; margin: 0;">
+          <h5 style="margin-top: 0; margin-bottom: 0.5rem;"><strong>Motivation</strong></h5>
+          <p style="margin: 0 0 1rem 0; font-size: 0.95rem; line-height: 1.6;">
+            Flow Matching trajectories are geometrically non-uniform, containing high-curvature regions that are intrinsically unstable. Standard methods fail to account for this geometric nuance, causing significant drift when these critical "inflection points" are under-resolved by static quantization.
+          </p>
+          
+          <h5 style="margin-top: 1rem; margin-bottom: 0.5rem;"><strong>Key Mechanism</strong></h5>
+          <!-- <p style="margin: 0 0 1rem 0; font-size: 0.95rem; line-height: 1.6;">
+            CAQ monitors the trajectory's curvature in real-time by calculating the cosine angular shift between timesteps. When it detects sharp geometric turns (high curvature), it dynamically allocates higher precision to that specific step, compensating for the increased sensitivity.
+          </p> -->
+          <ul style="margin: 0; padding-left: 20px;">
+            <li style="margin-bottom: 5px;">
+              <strong>Curvature Sensitivity Identification:</strong> CAQ utilizes a cosine-based curvature proxy to precisely locate geometric segments where the trajectory changes direction rapidly, identifying them as high-sensitivity intervals prone to error amplification.
+            </li>
+            <li>
+              <strong>Adaptive Precision:</strong> When it detects sharp geometric turns (high curvature), it dynamically allocates higher precision to that specific step, compensating for the increased sensitivity.
+            </li>
+        </ul>
+          
+          <h5 style="margin-top: 1rem; margin-bottom: 0.5rem;"><strong>Impact</strong></h5>
+          <p style="margin: 0; font-size: 0.95rem; line-height: 1.6;">
+            By prioritizing directional integrity over simple magnitude preservation, CAQ effectively minimizes angular distortion. This ensures the generated video follows the correct deterministic path without diverging into noise or artifacts.
+          </p>
+        </div>
+      </div>
+      
+      <!-- DBP -->
+      <div class="column is-half" style="padding: 0 0 0 1rem;">
+        <h3 class="title is-4" style="margin-bottom: 1rem;">Directional Bottleneck Preservation (DBP)</h3>
+        <div class="content" style="padding: 0; margin: 0;">
+          <h5 style="margin-top: 0; margin-bottom: 0.5rem;"><strong>Motivation</strong></h5>
+          <p style="margin: 0 0 1rem 0; font-size: 0.95rem; line-height: 1.6;">
+            Standard error metrics like MSE often overlook layers with small activation magnitudes. However, our theoretical analysis reveals that these "structural bottlenecks" are geometrically unstable; even minimal quantization noise in these layers triggers disproportionately large angular deviations.
+          </p>
+          
+          <h5 style="margin-top: 1rem; margin-bottom: 0.5rem;"><strong>Key Mechanism</strong></h5>
+          <!-- <p style="margin: 0 0 1rem 0; font-size: 0.95rem; line-height: 1.6;">
+            We introduce a novel metric called "Directional Sensitivity (DS)" to pinpoint these vulnerable layers. Based on this analysis, DBP selectively preserves the most critical components—comprising less than 1% of total parameters—in FP16 precision while aggressively quantizing the rest.
+          </p> -->
+          <ul style="margin: 0; padding-left: 20px;">
+            <li style="margin-bottom: 5px;">
+              <strong>Layer Sensitivity Analysis:</strong> We introduce a novel metric called "Directional Sensitivity (DS)" to pinpoint vulnerable layers prone to angular distortion.
+            </li>
+            <li>
+              <strong>Strategic Preservation:</strong> Guided by upon metric, DBP selectively retains the identified structural bottlenecks in FP16 precision. This targeted protection neutralizes error amplification in critical components, allowing the majority of the model to be efficiently quantized without structural collapse.
+            </li>
+        </ul>
+          
+          <h5 style="margin-top: 1rem; margin-bottom: 0.5rem;"><strong>Impact</strong></h5>
+          <p style="margin: 0; font-size: 0.95rem; line-height: 1.6;">
+            This strategy prevents catastrophic quality degradation, such as color collapse or texture washout. It enables the model to maintain high-fidelity structural consistency and vivid details even under extreme low-bit quantization regimes.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Images Below -->
+<section class="section" style="padding: 0.2rem 0; margin-top: -2em;">
+  <div class="container is-max-widescreen" style="padding: 0 0rem; margin: 0;">
+    <div class="columns" style="margin: 0;">
+      <div class="column is-half" style="padding: 0 1rem 0 0;">
+        <figure class="image" style="height: 300px; display: flex; align-items: center; justify-content: center;">
+          <img src="./static/images/DAQ.png" alt="CAQ Visualization" style="border-radius: 4px; max-height: 100%; max-width: 100%; object-fit: contain;">
+        </figure>
+      </div>
+      <div class="column is-half" style="padding: 0 1rem 1rem 1rem;">
+        <figure class="image" style="height: 300px; display: flex; align-items: center; justify-content: center;">
+          <img src="./static/images/SLP.png" alt="DBP Visualization" style="border-radius: 4px; max-height: 100%; max-width: 100%; object-fit: contain;">
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding: 2rem 0;">
+  <div class="container is-max-widescreen" style="padding: 0 1rem; margin: 0;">
+    <h2 class="title is-3 has-text-centered" style="margin-bottom: 2rem;">Experimental Results</h2>
+    
+    <!-- Table 1 -->
+    <div style="margin-bottom: 3rem;">
+      <h4 class="title is-5" style="margin-bottom: 1rem;">Table 1: VBench Performance Comparison</h4>
+      <figure class="image">
+        <img src="./static/images/table1.png" alt="Table 1: VBench Performance Comparison" style="border-radius: 4px;">
+      </figure>
+      <p style="margin-top: 1rem; font-size: 0.95rem; color: #555;">
+        Quantitative evaluation on VBench demonstrates TrajeQ's superior performance across various quantization schemes. <strong>At W6A6, TrajeQ achieves near-lossless quality comparable to FP16, while maintaining robust structural integrity even under the extreme W3A6 regime.</strong>
+      </p>
+    </div>
+    
+    <!-- Table 2 -->
+    <div style="margin-bottom: 3rem;">
+      <h4 class="title is-5" style="margin-bottom: 1rem;">Table 2: OpenSora Performance Analysis</h4>
+      <figure class="image">
+        <img src="./static/images/table2.png" alt="Table 2: OpenSora Performance Analysis" style="border-radius: 4px;">
+      </figure>
+      <p style="margin-top: 1rem; font-size: 0.95rem; color: #555;">
+        Performance comparison on OpenSora prompts. <strong>TrajeQ achieves SOTA results across all bit-widths</strong>, delivering superior visual fidelity and motion stability compared to existing quantization methods.
+      </p>
+    </div>
+    
+    <!-- Table 3 -->
+    <div style="margin-bottom: 3rem;">
+      <h4 class="title is-5" style="margin-bottom: 1rem;">Table 3: Computational Cost Analysis</h4>
+      <figure class="image">
+        <img src="./static/images/table3.png" alt="Table 3: Method Ablation Study" style="border-radius: 4px; max-width: 630px; margin: 0 auto; display: block;">
+      </figure>
+      <p style="margin-top: 1rem; font-size: 0.95rem; color: #555;">
+        Efficiency-quality trade-off analysis on VBench. Under the challenging W3A6 regime, TrajeQ consistently surpasses existing baselines across both perceptual (LPIPS) and structural (SSIM) metrics, <strong>establishing a more favorable balance between aggressive compression and generation fidelity.</strong>
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="hero is-small" style="background-color: white;">
+  <div class="hero-body" style="padding: 1.5rem 0;">
+    <div class="container is-max-widescreen" style="padding-left: 0; padding-right: 0;">
+      <h2 class="title is-3 has-text-centered">Quantization Quality Comparison (VBench)</h2>
+
+      <!-- Row 1: Train -->
+      <div class="columns" style="margin-left: 0; margin-right: 0; margin-bottom: 0;">
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem; margin-bottom: 0;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/train_minmax.mp4" type="video/mp4">
+          </video>
+          <p class="has-text-centered" style="margin-top: 0.5rem; margin-bottom: 0;"><strong>MinMax W6A6</strong><br><span style="font-size: 0.85rem; color: #e74c3c;">Volumetric Artifacts</span></p>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem; margin-bottom: 0;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/train_viditq.mp4" type="video/mp4">
+          </video>
+          <p class="has-text-centered" style="margin-top: 0.5rem; margin-bottom: 0;"><strong>ViDiT-Q W6A6</strong><br><span style="font-size: 0.85rem; color: #e74c3c;">Physics Inconsistency</span></p>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem; margin-bottom: 0;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/train_trajeQ.mp4" type="video/mp4">
+          </video>
+          <p class="has-text-centered" style="margin-top: 0.5rem; margin-bottom: 0;"><strong>TrajeQ W6A6</strong></p>
+        </div>
+      </div>
+
+      <!-- Row 2: Flower -->
+      <div class="columns" style="margin-top: 0.5rem; margin-left: 0; margin-right: 0; margin-bottom: 0;">
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem; margin-bottom: 0;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/comparison_flower_minmax.mp4" type="video/mp4">
+          </video>
+          <p class="has-text-centered" style="margin-top: 0.5rem; margin-bottom: 0;"><strong>MinMax W6A6</strong><br><span style="font-size: 0.85rem; color: #e74c3c;">Object Missing</span></p>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem; margin-bottom: 0;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/comparison_flower_viditq.mp4" type="video/mp4">
+          </video>
+          <p class="has-text-centered" style="margin-top: 0.5rem; margin-bottom: 0;"><strong>ViDiT-Q W6A6</strong><br><span style="font-size: 0.85rem; color: #e74c3c;">Structural Distortion</span></p>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem; margin-bottom: 0;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/comparision_flower_trajeQ.mp4" type="video/mp4">
+          </video>
+          <p class="has-text-centered" style="margin-top: 0.5rem; margin-bottom: 0;"><strong>TrajeQ W6A6</strong></p>
+        </div>
+      </div>
+
+      <!-- Row 3: Snow Bike (W6A6) -->
+      <div class="columns" style="margin-top: 0.5rem; margin-left: 0; margin-right: 0; margin-bottom: 0;">
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem; margin-bottom: 0;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/snow_bike_minmax_w6a6.mp4" type="video/mp4">
+          </video>
+          <p class="has-text-centered" style="margin-top: 0.5rem; margin-bottom: 0;"><strong>MinMax W6A6</strong><br><span style="font-size: 0.85rem; color: #e74c3c;">Temporal Warping</span></p>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem; margin-bottom: 0;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/snow_bike_viditq_w6a6.mp4" type="video/mp4">
+          </video>
+          <p class="has-text-centered" style="margin-top: 0.5rem; margin-bottom: 0;"><strong>ViDiT-Q W6A6</strong><br><span style="font-size: 0.85rem; color: #e74c3c;">Scale Inconsistency</span></p>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem; margin-bottom: 0;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/snow_bike_trajeQ_w6a6.mp4" type="video/mp4">
+          </video>
+          <p class="has-text-centered" style="margin-top: 0.5rem; margin-bottom: 0;"><strong>TrajeQ W6A6</strong></p>
+        </div>
+      </div>
+
+      <!-- Row 4: Turtle (W4A6) -->
+      <div class="columns" style="margin-top: 0.5rem; margin-left: 0; margin-right: 0; margin-bottom: 0;">
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem; margin-bottom: 0;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/space_horse_minmax_w4a6.mp4" type="video/mp4">
+          </video>
+          <p class="has-text-centered" style="margin-top: 0.5rem; margin-bottom: 0;"><strong>MinMax W4A6</strong><br><span style="font-size: 0.85rem; color: #e74c3c;">Perspective Distortion</span></p>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem; margin-bottom: 0;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/space_horse_viditq_w4a6.mp4" type="video/mp4">
+          </video>
+          <p class="has-text-centered" style="margin-top: 0.5rem; margin-bottom: 0;"><strong>ViDiT-Q W4A6</strong><br><span style="font-size: 0.85rem; color: #e74c3c;">Structural Deformation</span></p>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem; margin-bottom: 0;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/space_horse_trajeQ_w4a6.mp4" type="video/mp4">
+          </video>
+          <p class="has-text-centered" style="margin-top: 0.5rem; margin-bottom: 0;"><strong>TrajeQ W4A6</strong></p>
+        </div>
+      </div>
+
+      <!-- Row 5: Skyscraper (W4A6) -->
+      <div class="columns" style="margin-top: 0.5rem; margin-left: 0; margin-right: 0;">
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem; margin-bottom: 0;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/skyscraper_minmax_w4a6.mp4" type="video/mp4">
+          </video>
+          <p class="has-text-centered" style="margin-top: 0.5rem; margin-bottom: 0;"><strong>MinMax W4A6</strong><br><span style="font-size: 0.85rem; color: #e74c3c;">contrast collapse</span></p>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem; margin-bottom: 0;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/skyscraper_viditq_w4a6.mp4" type="video/mp4">
+          </video>
+          <p class="has-text-centered" style="margin-top: 0.5rem; margin-bottom: 0;"><strong>ViDiT-Q W4A6</strong><br><span style="font-size: 0.85rem; color: #e74c3c;">chromatic deviation</span></p>
+        </div>
+        <div class="column is-one-third" style="padding-left: 0.25rem; padding-right: 0.25rem;">
+          <video autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/skyscraper_trajeQ_w4a6.mp4" type="video/mp4">
+          </video>
+          <p class="has-text-centered" style="margin-top: 0.5rem; margin-bottom: 0;"><strong>TrajeQ W4A6</strong></p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="hero is-small">
+  <div class="hero-body">
+    <div class="container">
+      <h2 class="title is-3 has-text-centered">Extreme Quantization: W4A4 Comparison</h2>
+      <div class="is-size-6 has-text-justified" style="color: #555; margin-top: 1rem; margin-bottom: 2rem;">
+        <p>
+          TrajeQ maintains visual coherence and structural integrity even at the extreme W4A4 quantization regime,
+          where standard methods completely fail to preserve meaningful content.
+        </p>
+      </div>
+
+      <!-- MinMax Row -->
+      <div style="background-color: #f8f9fa; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+        <div class="columns" style="margin-bottom: 0.5rem;">
+          <div class="column is-half">
+            <p class="has-text-centered" style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #666;"><em>"Iron Man flying in the sky"</em></p>
+            <video autoplay controls muted loop playsinline width="100%">
+              <source src="./static/videos/ironman_minmax_w4a4.mp4" type="video/mp4">
+            </video>
+          </div>
+          <div class="column is-half">
+            <p class="has-text-centered" style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #666;"><em>"River"</em></p>
+            <video autoplay controls muted loop playsinline width="100%">
+              <source src="./static/videos/river_minmax_w4a4.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+        <h3 class="subtitle has-text-centered" style="margin-top: 1rem; margin-bottom: 0;"><strong>MinMax</strong></h3>
+      </div>
+
+      <!-- SmoothQuant Row -->
+      <div style="background-color: #f8f9fa; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+        <div class="columns" style="margin-bottom: 0.5rem;">
+          <div class="column is-half">
+            <p class="has-text-centered" style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #666;"><em>"Iron Man flying in the sky"</em></p>
+            <video autoplay controls muted loop playsinline width="100%">
+              <source src="./static/videos/ironman_smoothq_w4a4.mp4" type="video/mp4">
+            </video>
+          </div>
+          <div class="column is-half">
+            <p class="has-text-centered" style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #666;"><em>"River"</em></p>
+            <video autoplay controls muted loop playsinline width="100%">
+              <source src="./static/videos/river_smoothq_w4a4.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+        <h3 class="subtitle has-text-centered" style="margin-top: 1rem; margin-bottom: 0;"><strong>SmoothQuant</strong></h3>
+      </div>
+
+      <!-- Quarot Row -->
+      <div style="background-color: #f8f9fa; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+        <div class="columns" style="margin-bottom: 0.5rem;">
+          <div class="column is-half">
+            <p class="has-text-centered" style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #666;"><em>"Iron Man flying in the sky"</em></p>
+            <video autoplay controls muted loop playsinline width="100%">
+              <source src="./static/videos/ironman_quarot_w4a4.mp4" type="video/mp4">
+            </video>
+          </div>
+          <div class="column is-half">
+            <p class="has-text-centered" style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #666;"><em>"River"</em></p>
+            <video autoplay controls muted loop playsinline width="100%">
+              <source src="./static/videos/river_quarot_w4a4.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+        <h3 class="subtitle has-text-centered" style="margin-top: 1rem; margin-bottom: 0;"><strong>QuaRot</strong></h3>
+      </div>
+
+      <!-- Q-DiT Row -->
+      <div style="background-color: #f8f9fa; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+        <div class="columns" style="margin-bottom: 0.5rem;">
+          <div class="column is-half">
+            <p class="has-text-centered" style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #666;"><em>"Iron Man flying in the sky"</em></p>
+            <video autoplay controls muted loop playsinline width="100%">
+              <source src="./static/videos/ironman_qdit_w4a4.mp4" type="video/mp4">
+            </video>
+          </div>
+          <div class="column is-half">
+            <p class="has-text-centered" style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #666;"><em>"River"</em></p>
+            <video autoplay controls muted loop playsinline width="100%">
+              <source src="./static/videos/river_qdit_w4a4.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+        <h3 class="subtitle has-text-centered" style="margin-top: 1rem; margin-bottom: 0;"><strong>Q-DiT</strong></h3>
+      </div>
+
+      <!-- ViDiT-Q Row -->
+      <div style="background-color: #f8f9fa; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+        <div class="columns" style="margin-bottom: 0.5rem;">
+          <div class="column is-half">
+            <p class="has-text-centered" style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #666;"><em>"Iron Man flying in the sky"</em></p>
+            <video autoplay controls muted loop playsinline width="100%">
+              <source src="./static/videos/ironman_viditq_w4a4.mp4" type="video/mp4">
+            </video>
+          </div>
+          <div class="column is-half">
+            <p class="has-text-centered" style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #666;"><em>"River"</em></p>
+            <video autoplay controls muted loop playsinline width="100%">
+              <source src="./static/videos/river_viditq_w4a4.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+        <h3 class="subtitle has-text-centered" style="margin-top: 1rem; margin-bottom: 0;"><strong>ViDiT-Q</strong></h3>
+      </div>
+
+      <!-- TrajeQ Row -->
+      <div style="background-color: #f8f9fa; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+        <div class="columns" style="margin-bottom: 0.5rem;">
+          <div class="column is-half">
+            <p class="has-text-centered" style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #666;"><em>"Iron Man flying in the sky"</em></p>
+            <video autoplay controls muted loop playsinline width="100%">
+              <source src="./static/videos/ironman_trajeQ_w4a4.mp4" type="video/mp4">
+            </video>
+          </div>
+          <div class="column is-half">
+            <p class="has-text-centered" style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #666;"><em>"River"</em></p>
+            <video autoplay controls muted loop playsinline width="100%">
+              <source src="./static/videos/river_trajeQ_w4a4.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+        <h3 class="subtitle has-text-centered" style="margin-top: 1rem; margin-bottom: 0;"><strong>TrajeQ (Ours)</strong></h3>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+
+
+
+
+<section class="section" style="padding-top: 0rem; padding-bottom: 5rem;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Future Work</h2>
+        <div class="content has-text-justified">
+          <p>
+            While TrajeQ analyzes the geometric trajectory of velocity vectors, future work will investigate how quantization alters internal feature representations, especially whether it disrupts the geometry of superposed features.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<footer class="footer">
+  <div class="container">
+    <div class="content has-text-centered">
+      <a class="icon-link"
+         href="./static/videos/nerfies_paper.pdf">
+        <i class="fas fa-file-pdf"></i>
+      </a>
+      <a class="icon-link" href="https://github.com/keunhong" class="external-link" disabled>
+        <i class="fab fa-github"></i>
+      </a>
+    </div>
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            This website is licensed under a <a rel="license"
+                                                href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
+            Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+          <p>
+            This means you are free to borrow the <a
+              href="https://github.com/nerfies/nerfies.github.io">source code</a> of this website,
+            we just ask that you link back to this page in the footer.
+            Please remember to remove the analytics code included in the header of the website which
+            you do not want on your website.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
